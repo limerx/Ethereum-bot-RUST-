@@ -1,0 +1,11 @@
+{
+    "ethereum": {
+        "uniswap_v2": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        "uniswap_v3": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+        "sushiswap": "0xC0AEe478e3658e2610c5F7A4A2E1777Ce9e4f2Ac",
+        "pancakeswap_v3": "0x1097053Fd2ea711dad45caCcc45EfF7548fCB362",
+        "balancer_v2": "0xba12222222228d8Ba445958a75a0704d566BF2C8",
+        "kyberswap_elastic": "0x1C758Af0688502e49140230F6E0B1176E717cfdc",
+        "shibaswap": "0x115934131916C8b277DD010Ee02de363c09d037c"
+    }
+}
