@@ -1,5 +1,5 @@
-use ethers::providers::{ Provider, Ws, Middleware };
-use ethers::types::{ H160, Filter, U256, NameOrAddress, TransactionRequest };
+use ethers::providers::{Provider, Ws, Middleware};
+use ethers::types::{H160, Filter, U256, NameOrAddress, TransactionRequest};
 use ethers::contract::abigen;
 use ethers::abi::Token;
 use std::sync::Arc;
@@ -8,7 +8,7 @@ use serde::Serialize;
 use std::env;
 use std::fs::OpenOptions;
 use futures_util::StreamExt;
-use tokio::time::{ sleep, Duration };
+use tokio::time::{sleep, Duration};
 
 // Génération automatique de l'interface ERC-20
 abigen!(
@@ -57,15 +57,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("🎧 Écoute des événements PairCreated...");
 
-    // Écoute des logs
-    let mut log_stream = provider.subscribe_logs(&filter).await?;
-    while let Some(log) = log_stream.next().await {
-        if let Some(pair_info) = handle_pair_created(log, provider.clone()).await {
-            save_to_csv(pair_info)?;
-        }
-    }
+    loop {
+        let mut log_stream = match provider.subscribe_logs(&filter).await {
+            Ok(stream) => stream,
+            Err(err) => {
+                println!("❌ Erreur de connexion au flux de logs : {:?}. Nouvelle tentative...", err);
+                sleep(Duration::from_secs(10)).await;
+                continue;
+            }
+        };
 
-    Ok(())
+        while let Some(log) = log_stream.next().await {
+            match handle_pair_created(log, provider.clone()).await {
+                Some(pair_info) => {
+                    if let Err(err) = save_to_csv(pair_info) {
+                        println!("❌ Erreur lors de l'enregistrement des données : {:?}", err);
+                    }
+                }
+                None => {
+                    println!("⚠️ Paire ignorée ou non valide.");
+                }
+            }
+        }
+
+        println!("🔄 Le flux de logs s'est arrêté. Nouvelle tentative de connexion...");
+        sleep(Duration::from_secs(10)).await; // Reconnexion après une pause
+    }
 }
 
 /// Traiter un événement PairCreated et récupérer les informations des tokens
@@ -256,7 +273,8 @@ fn save_to_csv(pair_info: PairInfo) -> Result<(), Box<dyn std::error::Error>> {
     println!("📂 Paire enregistrée dans le fichier : {}", file_path);
     Ok(())
 }
-// Ajoutez cette fonction à la fin de votre fichier
+
+/// Simuler un transfert pour détecter des taxes dynamiques
 async fn simulate_transfer(
     token_address: H160,
     recipient: H160,
